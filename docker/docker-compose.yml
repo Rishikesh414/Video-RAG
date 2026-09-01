@@ -1,0 +1,61 @@
+# ─── VideoRAG Docker Compose ───
+# Orchestrates frontend, backend, and PostgreSQL services
+
+version: "3.8"
+
+services:
+  # ── PostgreSQL Database ──────────────────────
+  db:
+    image: postgres:15-alpine
+    container_name: videorag-db
+    environment:
+      POSTGRES_DB: videorag
+      POSTGRES_USER: videorag_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U videorag_user -d videorag"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── FastAPI Backend ──────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    container_name: videorag-backend
+    environment:
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: videorag
+      POSTGRES_USER: videorag_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      SECRET_KEY: ${SECRET_KEY:-change-me-to-a-random-secret}
+      LLM_PROVIDER: ${LLM_PROVIDER:-llama}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data:/app/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── React Frontend ──────────────────────────
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    container_name: videorag-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

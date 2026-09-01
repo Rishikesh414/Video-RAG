@@ -1,0 +1,84 @@
+/* FacultyDashboard Styles */
+
+.faculty-dashboard {
+  display: flex;
+  min-height: 100vh;
+}
+
+.faculty-dashboard__main {
+  flex: 1;
+  padding: var(--space-6);
+}
+
+.faculty-dashboard__header {
+  margin-bottom: var(--space-6);
+}
+
+.faculty-dashboard__header h1 {
+  font-size: var(--font-size-2xl);
+  font-weight: 700;
+  margin-bottom: var(--space-1);
+}
+
+.faculty-dashboard__header p {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.faculty-dashboard__status {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-4);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.faculty-dashboard__status--success {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.faculty-dashboard__status--error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+.faculty-dashboard__uploads {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-6);
+}
+
+.faculty-dashboard__section {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+
+.faculty-dashboard__section h2 {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  margin-bottom: var(--space-2);
+}
+
+.faculty-dashboard__section p {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-4);
+}
+
+.faculty-dashboard__loading {
+  margin-top: var(--space-4);
+  text-align: center;
+  color: var(--color-accent);
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .faculty-dashboard__uploads {
+    grid-template-columns: 1fr;
+  }
+}
