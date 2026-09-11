@@ -1,8 +1,9 @@
 """
 Scene Detector — splits videos into meaningful scenes using PySceneDetect.
 
-Identifies scene boundaries (cuts, fades) to segment long videos
-into coherent clips for more accurate retrieval.
+Part of Step 1 (Indexing). Identifies scene boundaries (cuts, fades) to
+segment long videos into coherent sections. Scene boundaries are stored
+as metadata to help Step 2 find natural clip boundaries.
 """
 
 from typing import List, Tuple

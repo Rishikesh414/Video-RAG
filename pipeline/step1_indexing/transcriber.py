@@ -1,15 +1,13 @@
 """
 Transcriber — converts speech to text using OpenAI Whisper Large-v3.
 
-Generates timestamped transcripts for video content, enabling
-precise retrieval of video segments based on spoken content.
+Part of Step 1 (Indexing). Generates timestamped transcript segments
+that become the primary text metadata for semantic retrieval in Step 2.
 """
 
 import json
 from pathlib import Path
 from typing import List, Dict
-
-import whisper
 
 
 def transcribe_audio(
@@ -26,8 +24,12 @@ def transcribe_audio(
         language: Language code (e.g., 'en'). Auto-detected if None.
 
     Returns:
-        Dict with 'text' (full transcript) and 'segments' (timestamped chunks).
+        Dict with:
+        - 'text': Full transcript string
+        - 'language': Detected language
+        - 'segments': List of {id, start, end, text} timestamped chunks
     """
+    import whisper
     model = whisper.load_model(model_name)
 
     result = model.transcribe(

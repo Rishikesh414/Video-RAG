@@ -1,5 +1,5 @@
-# Backend requirements for VideoRAG
-# ===================================
+# Backend requirements for VideoRAG — Hybrid Architecture
+# ========================================================
 
 # --- Web Framework ---
 fastapi>=0.111.0
@@ -15,22 +15,22 @@ alembic>=1.13.0
 python-jose[cryptography]>=3.3.0
 passlib[bcrypt]>=1.7.4
 
-# --- AI / ML Pipeline ---
-langchain>=0.2.0
+# --- Step 1: Indexing ---
+openai-whisper>=20231117            # ASR transcription
+ultralytics>=8.2.0                  # YOLOv8 visual tagger
+opencv-python>=4.10.0               # Video frame sampling
+scenedetect[opencv]>=0.6.4          # Scene detection
+ffmpeg-python>=0.2.0                # Audio/video extraction
+
+# --- Step 2: Retrieval ---
+sentence-transformers>=3.0.0        # Text embeddings
+qdrant-client>=1.9.0                # Qdrant Vector search
+langchain>=0.2.0                    # LLM chains for timestamp resolution
 langchain-community>=0.2.0
-sentence-transformers>=3.0.0
-faiss-cpu>=1.8.0
-openai-whisper>=20231117
-easyocr>=1.7.0
-opencv-python>=4.10.0
-scenedetect[opencv]>=0.6.4
 
-# --- Audio / Video ---
-ffmpeg-python>=0.2.0
-
-# --- LLM Providers ---
-openai>=1.35.0
-google-generativeai>=0.7.0
+# --- Step 3: Multimodal LLM ---
+google-generativeai>=0.7.0          # Gemini 1.5 Pro
+openai>=1.35.0                      # GPT-4o
 
 # --- Utilities ---
 python-dotenv>=1.0.1

@@ -16,9 +16,9 @@ class TestQueryEndpoints:
         )
         assert response.status_code == 401
 
-    def test_get_segment_requires_auth(self, client):
-        """Fetching a video segment without auth should return 401."""
-        response = client.get("/api/v1/query/segment/test-id")
+    def test_get_clip_requires_auth(self, client):
+        """Fetching a video clip without auth should return 401."""
+        response = client.get("/api/v1/query/clip/test-id")
         assert response.status_code == 401
 
     def test_health_check(self, client):

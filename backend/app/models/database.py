@@ -23,7 +23,7 @@ class User(Base):
     name = Column(String(255), nullable=False)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    role = Column(Enum("student", "faculty", name="user_role"), nullable=False, default="student")
+    role = Column(Enum("student", "faculty", name="user_role", native_enum=False), nullable=False, default="student")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -39,7 +39,7 @@ class Upload(Base):
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     filename = Column(String(500), nullable=False)
-    file_type = Column(Enum("video", "pdf", name="file_type"), nullable=False)
+    file_type = Column(Enum("video", "pdf", name="file_type", native_enum=False), nullable=False)
     file_path = Column(String(1000), nullable=False)
     status = Column(String(50), default="processing")  # processing | completed | failed
     created_at = Column(DateTime, default=datetime.utcnow)

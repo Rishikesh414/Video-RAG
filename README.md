@@ -18,7 +18,7 @@ An advanced **Retrieval-Augmented Generation (RAG)** framework that enables AI t
 └──────────────┘    └──────────────────┘    └──────────────────┘
                            │                        │
                     ┌──────┴──────┐          ┌──────┴──────┐
-                    │ PostgreSQL  │          │   FAISS     │
+                    │ PostgreSQL  │          │   Qdrant    │
                     │ (Users,     │          │   Vector    │
                     │  History)   │          │   Store     │
                     └─────────────┘          └─────────────┘
@@ -32,12 +32,12 @@ An advanced **Retrieval-Augmented Generation (RAG)** framework that enables AI t
 | Backend | FastAPI (Python 3.11) |
 | LLM | Llama 3.1 8B / GPT-4o / Gemini 2.5 Flash |
 | Embeddings | Qwen3-Embedding-8B / Sentence Transformers |
-| Video Understanding | InternVideo2 |
+| Video Understanding | InternVideo2 / YOLOv8 |
 | Frame Extraction | OpenCV |
 | Scene Detection | PySceneDetect |
 | Speech-to-Text | OpenAI Whisper Large-v3 |
 | OCR | EasyOCR |
-| Vector Database | FAISS |
+| Vector Database | Qdrant |
 | RAG Framework | LangChain |
 | Database | PostgreSQL |
 | Deployment | Docker |
@@ -103,7 +103,7 @@ VIDEO_RAG/
 ## 📖 Modules
 
 1. **Faculty / Admin Module** — Upload lecture recordings and PDF notes
-2. **Core VideoRAG Engine** — Process videos, extract frames, generate embeddings, build FAISS index
+2. **Core VideoRAG Engine** — Process videos, extract frames, generate embeddings, build Qdrant index
 3. **Student Dashboard** — Ask questions and receive evidence-based answers with video snippets
 
 ## 👥 Team

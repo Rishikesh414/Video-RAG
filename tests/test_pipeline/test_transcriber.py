@@ -2,17 +2,18 @@
 Tests for the transcriber module.
 """
 
+import sys
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+from pipeline.step1_indexing.transcriber import save_transcript, transcribe_audio
 
 
 class TestTranscriber:
-    """Tests for pipeline.audio_processing.transcriber."""
+    """Tests for pipeline.step1_indexing.transcriber."""
 
     def test_save_transcript(self, tmp_path):
         """save_transcript should write a valid JSON file."""
-        from pipeline.audio_processing.transcriber import save_transcript
-
         transcript = {
             "text": "Hello world",
             "language": "en",
@@ -25,8 +26,7 @@ class TestTranscriber:
         assert result == output
         assert (tmp_path / "transcript.json").exists()
 
-    @patch("whisper.load_model")
-    def test_transcribe_audio_returns_dict(self, mock_load):
+    def test_transcribe_audio_returns_dict(self):
         """transcribe_audio should return a dict with text and segments."""
         mock_model = MagicMock()
         mock_model.transcribe.return_value = {
@@ -34,11 +34,14 @@ class TestTranscriber:
             "language": "en",
             "segments": [{"id": 0, "start": 0.0, "end": 1.0, "text": "Test"}],
         }
-        mock_load.return_value = mock_model
 
-        from pipeline.audio_processing.transcriber import transcribe_audio
+        mock_whisper = MagicMock()
+        mock_whisper.load_model.return_value = mock_model
 
-        result = transcribe_audio("test.wav", model_name="tiny")
+        with patch.dict(sys.modules, {"whisper": mock_whisper}):
+            result = transcribe_audio("test.wav", model_name="tiny")
 
-        assert "text" in result
-        assert "segments" in result
+            assert "text" in result
+            assert "segments" in result
+            assert result["text"] == "Test"
+            assert len(result["segments"]) == 1

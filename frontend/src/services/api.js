@@ -60,10 +60,12 @@ export const uploadAPI = {
 
 // =====================
 // Query API (Student)
+// Returns 3-part response: answer, video_clip, timestamp
 // =====================
 export const queryAPI = {
   askQuestion: (payload) => api.post("/query/ask", payload),
-  getVideoSegment: (segmentId) => api.get(`/query/segment/${segmentId}`),
+  downloadClip: (clipId) => api.get(`/query/clip/${clipId}`, { responseType: "blob" }),
+  getClipUrl: (clipId) => `${api.defaults.baseURL?.replace("/api/v1", "")}/static/clips/clip_${clipId}.mp4`,
 };
 
 // =====================

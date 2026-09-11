@@ -1,9 +1,9 @@
 """
 Text Embedder — generates semantic vector embeddings for text using
-Qwen3-Embedding-8B or Sentence Transformers.
+Sentence Transformers (default) or Qwen3-Embedding-8B (production).
 
-These embeddings are stored in FAISS for fast similarity search
-during the retrieval phase of the RAG pipeline.
+Part of Step 2 (Retrieval). Embeds both the metadata chunks (at index time)
+and user queries (at query time) into the same vector space for Qdrant search.
 """
 
 from typing import List
@@ -15,7 +15,6 @@ from sentence_transformers import SentenceTransformer
 class TextEmbedder:
     """
     Text embedding generator using Sentence Transformers.
-    Supports Qwen3-Embedding-8B and other compatible models.
     """
 
     def __init__(self, model_name: str = "all-MiniLM-L6-v2"):
@@ -24,35 +23,18 @@ class TextEmbedder:
 
         Args:
             model_name: HuggingFace model ID or local path.
-                        Default is a lightweight model for development.
+                        Default is lightweight for development.
                         Use 'Qwen/Qwen3-Embedding-8B' for production.
         """
         self.model = SentenceTransformer(model_name)
         self.embedding_dim = self.model.get_sentence_embedding_dimension()
 
     def embed_text(self, text: str) -> np.ndarray:
-        """
-        Generate an embedding for a single text string.
-
-        Args:
-            text: The input text to embed.
-
-        Returns:
-            numpy array of shape (embedding_dim,).
-        """
+        """Generate an embedding for a single text string."""
         return self.model.encode(text, normalize_embeddings=True)
 
     def embed_texts(self, texts: List[str], batch_size: int = 32) -> np.ndarray:
-        """
-        Generate embeddings for a batch of texts.
-
-        Args:
-            texts: List of input text strings.
-            batch_size: Batch size for encoding.
-
-        Returns:
-            numpy array of shape (len(texts), embedding_dim).
-        """
+        """Generate embeddings for a batch of texts."""
         return self.model.encode(
             texts,
             batch_size=batch_size,

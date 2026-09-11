@@ -61,7 +61,7 @@ def main():
         # 5. OCR
         # 6. Chunk
         # 7. Embed
-        # 8. Add to FAISS index
+        # 8. Add to Qdrant collection
 
         print(f"   ✅ Indexed: {video_path.name}")
 

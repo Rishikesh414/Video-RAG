@@ -1,5 +1,11 @@
 """
-Upload service — handles file storage and triggers the VideoRAG processing pipeline.
+Upload service — handles file storage and triggers Step 1 (Indexing).
+
+On video upload, the hybrid pipeline's Step 1 runs:
+- Extracts audio → Whisper transcript
+- Runs YOLO visual tagger → timestamped object tags
+- Detects scene boundaries
+- Builds unified metadata and indexes into Qdrant
 """
 
 import uuid
@@ -8,20 +14,31 @@ from pathlib import Path
 from fastapi import UploadFile
 
 from app.config import settings
+from pipeline.orchestrator import VideoRAGOrchestrator
+
+
+# Lazy-loaded orchestrator singleton
+_orchestrator = None
+
+
+def _get_orchestrator() -> VideoRAGOrchestrator:
+    global _orchestrator
+    if _orchestrator is None:
+        _orchestrator = VideoRAGOrchestrator(config=settings.model_dump())
+    return _orchestrator
 
 
 async def process_video_upload(file: UploadFile, current_user: dict) -> dict:
     """
-    Save an uploaded video file to disk and queue it for pipeline processing.
+    Save an uploaded video and run Step 1 (Low-Cost Indexing).
 
     Steps:
-    1. Generate a unique file ID
-    2. Save the file to the video upload directory
-    3. Trigger the VideoRAG pipeline (frame extraction, ASR, embedding, etc.)
-    4. Store upload metadata in the database
+    1. Save video to disk
+    2. Run Step 1: audio extraction → transcription → visual tagging → scene detection
+    3. Build unified metadata and index into Qdrant
 
     Returns:
-        dict with file_id and status
+        dict with file_id, indexing stats, and status.
     """
     file_id = str(uuid.uuid4())
     upload_dir = Path(settings.VIDEO_UPLOAD_DIR)
@@ -35,24 +52,31 @@ async def process_video_upload(file: UploadFile, current_user: dict) -> dict:
         content = await file.read()
         f.write(content)
 
-    # TODO: Trigger async pipeline processing
-    # TODO: Store upload record in PostgreSQL
+    # Run Step 1: Index the video
+    orchestrator = _get_orchestrator()
+    indexing_result = orchestrator.index_video(
+        video_path=str(file_path),
+        video_id=file_id,
+        extra={
+            "original_filename": file.filename,
+            "uploaded_by": current_user.get("email", ""),
+        },
+    )
 
-    return {"file_id": file_id, "filename": file.filename, "status": "processing"}
+    return {
+        "file_id": file_id,
+        "filename": file.filename,
+        "status": "indexed",
+        "indexing": indexing_result,
+    }
 
 
 async def process_pdf_upload(file: UploadFile, current_user: dict) -> dict:
     """
     Save an uploaded PDF file and index it into the vector store.
 
-    Steps:
-    1. Generate a unique file ID
-    2. Save the PDF to disk
-    3. Extract text, chunk, embed, and add to FAISS index
-    4. Store upload metadata in the database
-
     Returns:
-        dict with file_id and status
+        dict with file_id and status.
     """
     file_id = str(uuid.uuid4())
     upload_dir = Path(settings.VIDEO_UPLOAD_DIR)
@@ -64,7 +88,6 @@ async def process_pdf_upload(file: UploadFile, current_user: dict) -> dict:
         content = await file.read()
         f.write(content)
 
-    # TODO: Extract text from PDF, chunk, embed, and add to FAISS
-    # TODO: Store upload record in PostgreSQL
+    # TODO: Extract text from PDF, chunk, embed, and add to Qdrant
 
     return {"file_id": file_id, "filename": file.filename, "status": "completed"}

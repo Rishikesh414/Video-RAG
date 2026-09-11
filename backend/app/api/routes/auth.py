@@ -2,21 +2,23 @@
 Authentication routes — login and registration endpoints.
 """
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 
 from app.models.schemas import LoginRequest, LoginResponse, RegisterRequest
 from app.services.auth_service import authenticate_user, create_user, create_access_token
+from database.connection import get_db
 
 router = APIRouter()
 
 
 @router.post("/login", response_model=LoginResponse)
-async def login(request: LoginRequest):
+async def login(request: LoginRequest, db: Session = Depends(get_db)):
     """
     Authenticate a user with email and password.
     Returns a JWT access token and user details.
     """
-    user = authenticate_user(request.email, request.password)
+    user = authenticate_user(request.email, request.password, db=db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -31,11 +33,11 @@ async def login(request: LoginRequest):
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
-async def register(request: RegisterRequest):
+async def register(request: RegisterRequest, db: Session = Depends(get_db)):
     """
     Register a new user (student or faculty).
     """
-    user = create_user(request)
+    user = create_user(request, db=db)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

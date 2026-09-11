@@ -1,5 +1,8 @@
 """
 Audio Extractor — extracts audio tracks from video files using FFmpeg.
+
+Part of Step 1 (Indexing). The extracted audio is fed to Whisper
+for transcript generation.
 """
 
 import subprocess
@@ -19,7 +22,7 @@ def extract_audio(
         video_path: Path to the source video file.
         output_path: Path for the output audio file. Auto-generated if None.
         audio_format: Output format (wav, mp3, flac).
-        sample_rate: Audio sample rate in Hz (16000 for Whisper).
+        sample_rate: Audio sample rate in Hz (16000 recommended for Whisper).
 
     Returns:
         Path to the extracted audio file.
@@ -28,6 +31,8 @@ def extract_audio(
 
     if output_path is None:
         output_path = str(video_path.with_suffix(f".{audio_format}"))
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
     cmd = [
         "ffmpeg",
