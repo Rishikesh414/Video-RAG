@@ -28,5 +28,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         )
     user = get_user_by_email(payload["email"], db=db)
     if user is not None:
-        return user
+        return {
+            "id": user.id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+        }
     return payload

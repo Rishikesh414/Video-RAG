@@ -1,30 +1,273 @@
-/* VideoPlayer Styles */
-
+/* VideoPlayer Component Styles */
 .video-player {
-  background: var(--color-bg-card);
-  border-radius: var(--radius-lg);
+  background: var(--color-bg-secondary);
   border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  box-shadow: var(--shadow-lg);
+  display: flex;
+  flex-direction: column;
 }
 
 .video-player--empty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: 200px;
+  min-height: 280px;
   color: var(--color-text-muted);
+  text-align: center;
+  padding: var(--space-8);
+  border-style: dashed;
+}
+
+.video-player__empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--space-3);
+  opacity: 0.6;
+}
+
+.video-player__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-primary);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .video-player__title {
-  padding: var(--space-3) var(--space-4);
   font-size: var(--font-size-sm);
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.video-player__badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--color-accent-light);
+  color: #c4b5fd;
+  padding: 0.2rem 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid rgba(124, 58, 237, 0.4);
+}
+
+.video-player__media-container {
+  position: relative;
+  background: #000;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .video-player__video {
   width: 100%;
-  display: block;
-  background: #000;
+  height: 100%;
+  object-fit: contain;
+  cursor: pointer;
+}
+
+/* Custom overlay controls */
+.video-player__controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.3) 70%, transparent 100%);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  opacity: 0.95;
+  transition: opacity 0.25s ease;
+}
+
+.video-player__media-container:hover .video-player__controls {
+  opacity: 1;
+}
+
+.video-player__scrubber-wrapper {
+  position: relative;
+  width: 100%;
+  height: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.video-player__scrubber {
+  width: 100%;
+  height: 5px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.25);
+  border-radius: 3px;
+  outline: none;
+  cursor: pointer;
+  transition: height 0.15s ease;
+}
+
+.video-player__scrubber:hover {
+  height: 7px;
+}
+
+.video-player__scrubber::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 6px var(--color-accent);
+  cursor: pointer;
+}
+
+.video-player__marker {
+  position: absolute;
+  top: 0;
+  width: 3px;
+  height: 12px;
+  background: #f43f5e;
+  border-radius: 2px;
+  cursor: pointer;
+  transform: translateX(-50%);
+  transition: transform 0.15s ease;
+}
+
+.video-player__marker:hover {
+  transform: translateX(-50%) scaleY(1.4);
+}
+
+.video-player__control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.video-player__left-controls,
+.video-player__right-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.video-player__btn {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 0.9rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.video-player__btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.video-player__time {
+  font-size: var(--font-size-xs);
+  color: #e2e8f0;
+  font-family: monospace;
+  margin-left: 0.3rem;
+}
+
+.video-player__volume-group {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.video-player__volume-slider {
+  width: 60px;
+  height: 4px;
+  appearance: none;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.video-player__volume-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+}
+
+.video-player__speeds {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 0.15rem;
+  border-radius: var(--radius-md);
+}
+
+.video-player__speed-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.2rem 0.4rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.video-player__speed-btn--active {
+  background: var(--color-accent);
+  color: #fff;
+}
+
+/* Key Moments List */
+.video-player__key-moments {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-bg-primary);
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  overflow-x: auto;
+}
+
+.video-player__moments-title {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.video-player__moments-list {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.video-player__moment-chip {
+  background: var(--color-bg-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 9999px;
+  padding: 0.25rem 0.65rem;
+  color: var(--color-text-secondary);
+  font-size: 0.72rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.video-player__moment-chip:hover {
+  border-color: var(--color-accent);
+  color: #fff;
+  background: var(--color-accent-light);
 }

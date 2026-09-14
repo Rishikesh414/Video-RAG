@@ -28,10 +28,10 @@ from app.api.routes import auth, upload, query, chat
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Lifecycle event: initialize database file and seed initial users on startup."""
+    """Lifecycle event: dynamically initialize database tables on startup."""
     try:
         from database.connection import init_db
-        init_db(seed=True)
+        init_db()
     except Exception as e:
         print(f"Warning: Could not initialize database on startup: {e}")
     yield

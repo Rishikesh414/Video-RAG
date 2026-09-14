@@ -1,39 +1,83 @@
 """
-Multimodal LLM — sends extracted video clips to a Multimodal LLM
-(Gemini 1.5 Pro or GPT-4o) for deep visual analysis.
+Multimodal LLM — analyzes extracted video clips by sampling key frames
+and sending them to a Vision Language Model (VLM) for deep analysis.
 
-Part of Step 3 (Multimodal). This is the EXPENSIVE step — only called
-on short clips (15-60 seconds) identified by Steps 1 and 2.
-The LLM watches the clip and generates a detailed, grounded answer.
+Part of Step 3 (Multimodal). Only called on short clips (15-60s) identified
+by Steps 1 and 2.
+
+Supported providers:
+  - ollama  : Local Ollama VLM (llama3.2-vision, llava, etc.) — DEFAULT, no API key
+  - gemini  : Google Gemini 1.5 Pro (API key required)
+  - openai  : GPT-4o (API key required)
+
+For an RTX 3050 6GB, use: provider='ollama', model='llama3.2-vision:11b'
 """
 
 import base64
+import logging
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Optional
+
+import cv2
+
+logger = logging.getLogger(__name__)
 
 
 class MultimodalLLM:
     """
-    Abstraction layer for multimodal LLM providers that can analyze video clips.
-    Supports Gemini 1.5 Pro and GPT-4o.
+    Abstraction layer for multimodal LLM providers that analyze video clips.
+
+    Default: Ollama (local, no API key needed).
+    Ollama samples key frames from the clip and sends them as images.
     """
 
-    def __init__(self, provider: str = "gemini", api_key: str = ""):
+    def __init__(
+        self,
+        provider: str = "ollama",
+        api_key: str = "",
+        model: str = "llama3.2-vision:11b",
+        ollama_base_url: str = "http://localhost:11434",
+    ):
         """
         Args:
-            provider: 'gemini' for Gemini 1.5 Pro, 'openai' for GPT-4o.
-            api_key: API key for the provider.
+            provider: 'ollama' (local), 'gemini', or 'openai'.
+            api_key: API key (only for gemini/openai).
+            model: Model name. Defaults to llama3.2-vision:11b for Ollama.
+            ollama_base_url: Ollama server URL.
         """
         self.provider = provider
         self.api_key = api_key
+        self.model = model
+        self.ollama_base_url = ollama_base_url
         self.client = None  # Lazy-loaded
 
     def _init_client(self):
-        """Initialize the provider client."""
-        if self.provider == "gemini":
-            import google.generativeai as genai
-            genai.configure(api_key=self.api_key)
-            self.client = genai.GenerativeModel("gemini-1.5-pro")
+        """Initialize the provider client on first use."""
+        if self.provider == "ollama":
+            try:
+                import ollama as ollama_sdk
+                self.client = ollama_sdk.Client(host=self.ollama_base_url)
+                logger.info(
+                    f"MultimodalLLM: Using Ollama model '{self.model}' "
+                    f"at {self.ollama_base_url}"
+                )
+            except ImportError:
+                raise ImportError(
+                    "ollama Python package not installed. "
+                    "Run: pip install ollama"
+                )
+
+        elif self.provider == "gemini":
+            try:
+                import google.genai as genai
+                self.client = genai.Client(api_key=self.api_key)
+            except ImportError:
+                import google.generativeai as genai
+                import warnings
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    genai.configure(api_key=self.api_key)
+                    self.client = genai.GenerativeModel("gemini-1.5-pro")
 
         elif self.provider == "openai":
             from openai import OpenAI
@@ -49,23 +93,69 @@ class MultimodalLLM:
         transcript_context: str = "",
     ) -> str:
         """
-        Send a video clip to the Multimodal LLM for deep analysis.
+        Analyze a video clip by sampling key frames and sending to the VLM.
 
         Args:
             clip_path: Path to the extracted video clip file.
             question: The user's original question.
-            transcript_context: Relevant transcript text for additional context.
+            transcript_context: Relevant transcript text for context.
 
         Returns:
-            The LLM's detailed text answer grounded in the video evidence.
+            Detailed text answer grounded in the visual evidence.
         """
         if self.client is None:
             self._init_client()
 
-        if self.provider == "gemini":
+        if self.provider == "ollama":
+            return self._analyze_with_ollama(clip_path, question, transcript_context)
+        elif self.provider == "gemini":
             return self._analyze_with_gemini(clip_path, question, transcript_context)
         elif self.provider == "openai":
             return self._analyze_with_openai(clip_path, question, transcript_context)
+
+        return "Analysis unavailable."
+
+    # ─── Ollama (local, default) ──────────────────────────────────────
+
+    def _analyze_with_ollama(
+        self,
+        clip_path: str,
+        question: str,
+        transcript_context: str,
+    ) -> str:
+        """
+        Analyze clip using a local Ollama VLM (e.g. llama3.2-vision:11b).
+
+        Samples 6 evenly-spaced key frames from the clip and sends them
+        alongside the transcript context for analysis.
+        """
+        # Sample key frames from the clip
+        frames_b64 = self._sample_frames_as_base64(clip_path, max_frames=6)
+
+        if not frames_b64:
+            logger.warning(f"No frames extracted from clip: {clip_path}")
+            return "Could not extract frames from the video clip for analysis."
+
+        prompt = self._build_prompt(question, transcript_context)
+
+        # Ollama vision: pass images as base64 in the 'images' field
+        response = self.client.chat(
+            model=self.model,
+            messages=[
+                {
+                    "role": "user",
+                    "content": prompt,
+                    "images": frames_b64,  # list of base64 strings
+                }
+            ],
+            options={
+                "temperature": 0.2,
+                "num_predict": 1024,
+            },
+        )
+        return response["message"]["content"].strip()
+
+    # ─── Gemini ───────────────────────────────────────────────────────
 
     def _analyze_with_gemini(
         self,
@@ -74,22 +164,34 @@ class MultimodalLLM:
         transcript_context: str,
     ) -> str:
         """Analyze clip using Gemini 1.5 Pro's native video understanding."""
-        import google.generativeai as genai
+        try:
+            # New SDK
+            import google.genai as genai
+            from google.genai import types
+            prompt = self._build_prompt(question, transcript_context)
+            with open(clip_path, "rb") as f:
+                video_bytes = f.read()
+            response = self.client.models.generate_content(
+                model="gemini-1.5-pro",
+                contents=[
+                    prompt,
+                    types.Part.from_bytes(data=video_bytes, mime_type="video/mp4"),
+                ],
+                config=types.GenerateContentConfig(temperature=0.2, max_output_tokens=2048),
+            )
+            return response.text.strip()
+        except ImportError:
+            # Legacy SDK
+            import google.generativeai as genai
+            video_file = genai.upload_file(clip_path)
+            prompt = self._build_prompt(question, transcript_context)
+            response = self.client.generate_content(
+                [video_file, prompt],
+                generation_config=genai.GenerationConfig(temperature=0.2, max_output_tokens=2048),
+            )
+            return response.text.strip()
 
-        # Upload the video clip to Gemini
-        video_file = genai.upload_file(clip_path)
-
-        prompt = self._build_prompt(question, transcript_context)
-
-        response = self.client.generate_content(
-            [video_file, prompt],
-            generation_config=genai.GenerationConfig(
-                temperature=0.2,
-                max_output_tokens=2048,
-            ),
-        )
-
-        return response.text
+    # ─── OpenAI ───────────────────────────────────────────────────────
 
     def _analyze_with_openai(
         self,
@@ -97,18 +199,9 @@ class MultimodalLLM:
         question: str,
         transcript_context: str,
     ) -> str:
-        """
-        Analyze clip using GPT-4o.
-        Note: GPT-4o processes video as sampled frames, not native video.
-        We extract key frames and send them as images.
-        """
-        import cv2
-
+        """Analyze clip using GPT-4o (sampled frames as images)."""
         frames_b64 = self._sample_frames_as_base64(clip_path, max_frames=8)
-
         prompt = self._build_prompt(question, transcript_context)
-
-        # Build message with images
         content = [{"type": "text", "text": prompt}]
         for frame_b64 in frames_b64:
             content.append({
@@ -118,18 +211,18 @@ class MultimodalLLM:
                     "detail": "high",
                 },
             })
-
         response = self.client.chat.completions.create(
             model="gpt-4o",
             messages=[{"role": "user", "content": content}],
             temperature=0.2,
             max_tokens=2048,
         )
+        return response.choices[0].message.content.strip()
 
-        return response.choices[0].message.content
+    # ─── Shared Utilities ─────────────────────────────────────────────
 
     def _build_prompt(self, question: str, transcript_context: str) -> str:
-        """Build the analysis prompt for the multimodal LLM."""
+        """Build the analysis prompt for the VLM."""
         transcript_section = ""
         if transcript_context:
             transcript_section = f"""
@@ -137,26 +230,31 @@ class MultimodalLLM:
 TRANSCRIPT FROM THIS CLIP:
 {transcript_context}
 """
+        return f"""You are VideoRAG, an AI tutor that answers student questions by analyzing lecture video evidence.
 
-        return f"""You are VideoRAG, an AI that answers questions by analyzing video evidence.
-
-You are being shown a specific video clip that was identified as containing
-the answer to the user's question. Analyze the visual content carefully.
+You are being shown key frames from a specific lecture video clip that was identified as containing the answer to the student's question. Analyze the visual content carefully.
 
 RULES:
-1. Answer based ONLY on what you see in this video clip and the transcript.
-2. Describe relevant visual details (objects, actions, text on screen, etc.).
-3. Be precise and specific — this clip was selected as evidence.
-4. If the clip doesn't contain the answer, say so clearly.
+1. Answer based ONLY on what you can see in these frames and the transcript.
+2. Describe relevant visual details (slides, diagrams, equations, code, whiteboard writing, etc.).
+3. Be precise and educational — this clip was selected as evidence for a student.
+4. If the frames don't contain the answer, say so clearly.
 {transcript_section}
-USER QUESTION: {question}
+STUDENT QUESTION: {question}
 
 Provide a detailed, evidence-based answer:"""
 
     @staticmethod
-    def _sample_frames_as_base64(video_path: str, max_frames: int = 8) -> list:
-        """Sample frames from a clip and encode as base64 JPEG for GPT-4o."""
-        import cv2
+    def _sample_frames_as_base64(video_path: str, max_frames: int = 6) -> list:
+        """
+        Sample evenly-spaced frames from a video clip.
+
+        Returns:
+            List of base64-encoded JPEG strings (not data URLs — raw base64).
+        """
+        if not Path(video_path).exists():
+            logger.warning(f"Clip not found: {video_path}")
+            return []
 
         cap = cv2.VideoCapture(video_path)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -169,12 +267,11 @@ Provide a detailed, evidence-based answer:"""
             ret, frame = cap.read()
             if not ret:
                 break
-
             if frame_count % interval == 0:
                 _, buffer = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 85])
                 frames_b64.append(base64.b64encode(buffer).decode("utf-8"))
-
             frame_count += 1
 
         cap.release()
+        logger.debug(f"Sampled {len(frames_b64)} frames from {video_path}")
         return frames_b64

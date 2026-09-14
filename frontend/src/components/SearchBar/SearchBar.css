@@ -1,35 +1,68 @@
 /* SearchBar Styles */
-
 .search-bar {
   display: flex;
-  gap: var(--space-2);
+  align-items: center;
+  background: var(--color-bg-primary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: 0.35rem 0.5rem 0.35rem 1rem;
   width: 100%;
+  max-width: 540px;
+  transition: all var(--transition-fast);
+}
+
+.search-bar:focus-within {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+.search-bar__icon {
+  font-size: 0.95rem;
+  margin-right: 0.5rem;
+  color: var(--color-text-muted);
 }
 
 .search-bar__input {
   flex: 1;
-  padding: var(--space-3) var(--space-4);
-  background: var(--color-bg-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  background: transparent;
+  border: none;
   color: var(--color-text-primary);
-  font-size: var(--font-size-base);
-  transition: border-color var(--transition-fast);
+  font-size: var(--font-size-sm);
+  outline: none;
+  min-width: 100px;
 }
 
-.search-bar__input:focus {
-  border-color: var(--color-accent);
+.search-bar__input::placeholder {
+  color: var(--color-text-muted);
+}
+
+.search-bar__clear {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 0 0.5rem;
+  font-size: 0.85rem;
+  transition: color var(--transition-fast);
+}
+
+.search-bar__clear:hover {
+  color: var(--color-text-primary);
 }
 
 .search-bar__btn {
-  padding: var(--space-3) var(--space-4);
   background: var(--color-accent);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-lg);
-  transition: background var(--transition-fast), transform var(--transition-fast);
+  color: #fff;
+  border: none;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
 }
 
 .search-bar__btn:hover {
   background: var(--color-accent-hover);
-  transform: scale(1.05);
+  transform: translateY(-1px);
 }

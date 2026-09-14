@@ -5,7 +5,7 @@ Provides:
 - Engine and session factory (auto-configured for SQLite or PostgreSQL)
 - Dependency injection for FastAPI routes (get_db)
 - Session lifecycle management
-- Table creation and seeding functions
+- Table creation and dynamic initialization
 """
 
 import sys
@@ -78,7 +78,7 @@ def get_db() -> Generator[Session, None, None]:
 # ─── Table Creation & Initialization ─────────────────────────────────
 
 def create_tables():
-    """Create all database tables."""
+    """Create all database tables dynamically."""
     Base.metadata.create_all(bind=engine)
 
 
@@ -87,13 +87,9 @@ def drop_tables():
     Base.metadata.drop_all(bind=engine)
 
 
-def init_db(seed: bool = True):
+def init_db():
     """
-    Initialize the database file/server:
-    1. Creates all tables (users, uploads, chat_messages)
-    2. Seeds initial default accounts (student, faculty, admin) if seed=True
+    Dynamically initialize database tables (users, uploads, chat_messages).
+    Zero static seed values — all users and entities are managed dynamically.
     """
     create_tables()
-    if seed:
-        from database.seed.seed_data import seed_users
-        seed_users()

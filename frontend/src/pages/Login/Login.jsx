@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { authAPI } from "../../services/api";
 import "./Login.css";
@@ -9,9 +9,11 @@ import "./Login.css";
  * Redirects to the appropriate dashboard based on user role.
  */
 function Login() {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || "");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState(location.state?.message || "");
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
@@ -19,6 +21,7 @@ function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -44,6 +47,7 @@ function Login() {
         </div>
 
         <form className="login__form" onSubmit={handleSubmit}>
+          {success && <div className="login__success">{success}</div>}
           {error && <div className="login__error">{error}</div>}
 
           <div className="login__field">
@@ -79,6 +83,19 @@ function Login() {
             disabled={isLoading}
           >
             {isLoading ? "Signing in..." : "Sign In"}
+          </button>
+
+          <div className="login__divider">
+            <span>or</span>
+          </div>
+
+          <button
+            id="register-btn"
+            type="button"
+            className="login__btn login__btn--secondary"
+            onClick={() => navigate("/register")}
+          >
+            Register
           </button>
         </form>
       </div>

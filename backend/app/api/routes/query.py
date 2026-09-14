@@ -12,9 +12,13 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 
 from app.api.dependencies import get_current_user
+import json
 from app.models.schemas import QueryRequest, QueryResponse, AnswerInfo, VideoClipInfo, TimestampInfo
+from app.models.database import ChatMessage
 from app.services.query_service import process_query
 from app.config import settings
+from database.connection import get_db
+from sqlalchemy.orm import Session
 
 router = APIRouter()
 
@@ -23,9 +27,11 @@ router = APIRouter()
 async def ask_question(
     request: QueryRequest,
     current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Submit a natural language question about lecture content.
+    Dynamically persists conversation in the chat_messages database table.
 
     The hybrid pipeline:
     1. Searches text metadata to find relevant timestamps (cheap)
@@ -38,13 +44,43 @@ async def ask_question(
     - Timestamps in the source video
     """
     try:
+        user_id = current_user.get("id") if isinstance(current_user, dict) else getattr(current_user, "id", None)
+
+        # 1. Dynamically save user's question
+        if user_id:
+            user_msg = ChatMessage(
+                user_id=user_id,
+                role="user",
+                content=request.question,
+            )
+            db.add(user_msg)
+            db.commit()
+
         result = await process_query(request.question, current_user)
 
+        answer_data = result.get("answer", {"text": "No answer generated."})
+        clip_data = result.get("video_clip", {})
+        timestamp_data = result.get("timestamp", {})
+        sources_data = result.get("sources", [])
+
+        # 2. Dynamically save AI assistant response
+        if user_id:
+            assistant_msg = ChatMessage(
+                user_id=user_id,
+                role="assistant",
+                content=answer_data.get("text", ""),
+                sources=json.dumps(sources_data) if sources_data else None,
+                video_timestamp=timestamp_data.get("start_time"),
+                confidence=answer_data.get("confidence", "high"),
+            )
+            db.add(assistant_msg)
+            db.commit()
+
         return QueryResponse(
-            answer=AnswerInfo(**result.get("answer", {"text": "No answer generated."})),
-            video_clip=VideoClipInfo(**result.get("video_clip", {})),
-            timestamp=TimestampInfo(**result.get("timestamp", {})),
-            sources=result.get("sources", []),
+            answer=AnswerInfo(**answer_data),
+            video_clip=VideoClipInfo(**clip_data),
+            timestamp=TimestampInfo(**timestamp_data),
+            sources=sources_data,
         )
     except Exception as e:
         raise HTTPException(

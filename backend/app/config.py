@@ -7,11 +7,17 @@ Updated for the 3-step hybrid pipeline.
 
 from pathlib import Path
 from typing import Optional
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     # ── General ──────────────────────────────
     APP_ENV: str = "development"
@@ -44,17 +50,30 @@ class Settings(BaseSettings):
             f"@{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}"
         )
 
-    # ── Step 2: Standard LLM (cheap, for timestamp resolution) ───
-    STANDARD_LLM_PROVIDER: str = "llama"  # llama | openai | gemini
-    LLAMA_MODEL_PATH: str = "./models/llama-3.1-8b-instruct.gguf"
+    # ── Ollama (local LLM server — default provider) ───
+    OLLAMA_BASE_URL: str = "http://localhost:11434"
 
-    # ── Step 3: Multimodal LLM (expensive, for clip analysis) ────
-    MULTIMODAL_LLM_PROVIDER: str = "gemini"  # gemini | openai
+    # ── Step 2: Standard LLM (cheap text, for timestamp resolution) ───
+    STANDARD_LLM_PROVIDER: str = "ollama"          # ollama | openai | llama
+    STANDARD_LLM_MODEL: str = "qwen2.5:7b"         # Ollama model for text reasoning
+    LLAMA_MODEL_PATH: str = ""                      # Only for llama-cpp fallback
+
+    # ── Step 3: Multimodal LLM (vision, for clip analysis) ────
+    MULTIMODAL_LLM_PROVIDER: str = "ollama"         # ollama | gemini | openai
+    MULTIMODAL_LLM_MODEL: str = "llama3.2-vision:11b"  # Ollama vision model
     OPENAI_API_KEY: str = ""
     GOOGLE_API_KEY: str = ""
 
     # ── Step 1: Visual Tagger ────────────────
     VISUAL_TAGGER_MODEL: str = "yolov8n.pt"
+
+    # ── Step 1: OCR (EasyOCR) ────────────────
+    OCR_ENABLED: bool = True
+    OCR_LANGUAGES: str = "en"  # Comma-separated: "en,hi" for English+Hindi
+
+    # ── Step 1: VLM Visual Describer ─────────
+    VLM_DESCRIBER_PROVIDER: str = "ollama"           # ollama | gemini | openai | disabled
+    VLM_DESCRIBER_MODEL: str = "llama3.2-vision:11b" # Same vision model as Step 3
 
     # ── Embeddings ───────────────────────────
     EMBEDDING_MODEL: str = "Qwen/Qwen3-Embedding-8B"
@@ -82,14 +101,18 @@ class Settings(BaseSettings):
     VISUAL_TAGS_DIR: str = "./data/visual_tags"
     EMBEDDINGS_DIR: str = "./data/embeddings"
     METADATA_DIR: str = "./data/metadata"
+    SCENE_DESCRIPTIONS_DIR: str = "./data/scene_descriptions"
+    PROCESSING_STATUS_DIR: str = "./data/processing"
 
     # ── JWT ───────────────────────────────────
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Return the global application settings instance."""
+    return settings

@@ -1,5 +1,5 @@
 """
-Database Setup Script — initializes the PostgreSQL database and creates all tables.
+Database Setup Script — dynamically creates all tables.
 
 Usage:
     python scripts/setup_db.py
@@ -12,17 +12,16 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from database.connection import create_tables, engine
-from backend.app.models.database import Base
 
 
 def main():
     """Create all database tables."""
-    print("🔧 Setting up VideoRAG database...")
+    print("Setting up VideoRAG database...")
     print(f"   Database URL: {engine.url}")
 
     try:
         create_tables()
-        print("✅ All tables created successfully!")
+        print("All tables created successfully!")
 
         # List created tables
         from sqlalchemy import inspect
@@ -31,7 +30,7 @@ def main():
         print(f"\n   Tables created: {', '.join(tables)}")
 
     except Exception as e:
-        print(f"❌ Error creating tables: {e}")
+        print(f"Error creating tables: {e}")
         sys.exit(1)
 
 

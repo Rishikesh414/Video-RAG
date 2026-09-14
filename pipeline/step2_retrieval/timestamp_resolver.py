@@ -9,12 +9,15 @@ the precise start/end timestamps for the relevant video clip.
 This is CHEAP — the LLM is only reading text metadata, not watching video.
 """
 
+import logging
 from typing import Dict, List, Optional
 
 try:
     from langchain_core.prompts import PromptTemplate
 except ImportError:
     from langchain.prompts import PromptTemplate
+
+logger = logging.getLogger(__name__)
 
 
 # ─── Prompt Template ─────────────────────────────────────────────────
@@ -130,38 +133,79 @@ class TimestampResolver:
         return parsed
 
 
-def get_standard_llm(provider: str = "llama", **kwargs):
+def get_standard_llm(provider: str = "ollama", **kwargs):
     """
-    Factory to get a cheap/standard LLM for timestamp resolution.
+    Factory to get a standard (text-only) LLM for timestamp resolution.
 
     Args:
-        provider: 'llama' (local), 'openai' (GPT-4o-mini), or 'gemini' (Flash).
+        provider: 'ollama' (default, local), 'openai' (GPT-4o-mini), or 'llama' (llama-cpp).
+        **kwargs: Provider-specific args:
+            - ollama: model (default 'qwen2.5:7b'), base_url (default 'http://localhost:11434')
+            - openai: model_name
+            - llama: model_path
 
     Returns:
         LangChain-compatible LLM instance.
     """
-    if provider == "openai":
-        from langchain_community.llms import OpenAI
-        return OpenAI(
-            model_name=kwargs.get("model_name", "gpt-4o-mini"),
-            temperature=0.1,
-            max_tokens=512,
-        )
-    elif provider == "gemini":
-        from langchain_community.llms import GooglePalm
-        return GooglePalm(
-            model_name=kwargs.get("model_name", "gemini-2.0-flash"),
-            temperature=0.1,
-            max_output_tokens=512,
-        )
+    if provider == "ollama":
+        try:
+            from langchain_community.llms import Ollama
+            model = kwargs.get("model", "qwen2.5:7b")
+            base_url = kwargs.get("base_url", "http://localhost:11434")
+            logger.info(f"Standard LLM: Ollama '{model}' at {base_url}")
+            return Ollama(
+                model=model,
+                base_url=base_url,
+                temperature=0.1,
+                num_predict=512,
+            )
+        except ImportError:
+            logger.warning(
+                "langchain-community not installed or Ollama not available. "
+                "Falling back to no-op LLM. Run: pip install langchain-community"
+            )
+            return _NoOpLLM()
+
+    elif provider == "openai":
+        try:
+            from langchain_community.llms import OpenAI
+            return OpenAI(
+                model_name=kwargs.get("model_name", "gpt-4o-mini"),
+                temperature=0.1,
+                max_tokens=512,
+            )
+        except Exception as e:
+            logger.warning(f"OpenAI LLM init failed: {e}. Falling back to no-op.")
+            return _NoOpLLM()
+
     elif provider == "llama":
-        from langchain_community.llms import LlamaCpp
-        return LlamaCpp(
-            model_path=kwargs.get("model_path", "./models/llama-3.1-8b-instruct.gguf"),
-            temperature=0.1,
-            max_tokens=512,
-            n_ctx=4096,
-            verbose=False,
-        )
+        try:
+            from langchain_community.llms import LlamaCpp
+            return LlamaCpp(
+                model_path=kwargs.get("model_path", "./models/llama-3.1-8b-instruct.gguf"),
+                temperature=0.1,
+                max_tokens=512,
+                n_ctx=4096,
+                verbose=False,
+            )
+        except ImportError:
+            logger.warning(
+                "llama-cpp-python not installed. Falling back to a no-op LLM. "
+                "Install with: pip install llama-cpp-python  or set "
+                "STANDARD_LLM_PROVIDER=gemini in .env"
+            )
+            return _NoOpLLM()
     else:
         raise ValueError(f"Unknown standard LLM provider: {provider}")
+
+class _NoOpLLM:
+    """
+    Fallback no-op LLM used when llama-cpp is not installed.
+    Returns the best search result's timestamps directly without LLM reasoning.
+    This is less accurate but avoids crashing the pipeline.
+    """
+    def invoke(self, prompt: str) -> str:
+        return "{}"
+
+    def __call__(self, prompt: str) -> str:
+        return "{}"

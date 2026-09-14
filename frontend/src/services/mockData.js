@@ -1,0 +1,263 @@
+/**
+ * Realistic Mock Data & Fallback Services for VideoRAG
+ * Provides complete curriculum, sample evidence responses, and uploaded content catalog.
+ */
+
+export const MODULES = [
+  {
+    id: "all",
+    code: "ALL",
+    title: "All Curriculum Modules",
+    description: "Search across the entire multi-module lecture catalog",
+  },
+  {
+    id: "m1",
+    code: "M1",
+    title: "Foundations of Deep Learning",
+    description: "Perceptrons, Backpropagation, Gradient Descent, Loss Landscapes",
+    icon: "🧠",
+  },
+  {
+    id: "m2",
+    code: "M2",
+    title: "Computer Vision & CNNs",
+    description: "Convolutions, ResNet, Object Detection (YOLOv8), Spatial Hierarchy",
+    icon: "👁️",
+  },
+  {
+    id: "m3",
+    code: "M3",
+    title: "Sequence Models & Transformers",
+    description: "RNNs, LSTMs, Self-Attention Mechanism, Multi-Head Attention",
+    icon: "⚡",
+  },
+  {
+    id: "m4",
+    code: "M4",
+    title: "Multimodal LLMs & Video AI",
+    description: "Vision-Language Models, Video-RAG Hybrid Pipeline, Whisper ASR",
+    icon: "🎬",
+  },
+];
+
+export const MOCK_LECTURES = [
+  {
+    id: "lec-m1-01",
+    moduleId: "m1",
+    moduleCode: "M1",
+    title: "Lecture 01: Neural Network Foundations & Backpropagation",
+    instructor: "Dr. Andrew Ng",
+    duration: "52:18",
+    durationSeconds: 3138,
+    uploadDate: "2026-08-20",
+    status: "completed",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+    thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=60",
+    visualTags: ["whiteboard", "neural-network", "chain-rule", "loss-function", "matrix-mult"],
+    transcriptionChunks: 142,
+    vectorCount: 284,
+    summary: "Comprehensive derivation of backpropagation using the multivariate chain rule, matrix calculus for dense layers, and gradient descent momentum.",
+  },
+  {
+    id: "lec-m2-01",
+    moduleId: "m2",
+    moduleCode: "M2",
+    title: "Lecture 04: Convolutional Architectures & Residual Networks",
+    instructor: "Prof. Fei-Fei Li",
+    duration: "48:45",
+    durationSeconds: 2925,
+    uploadDate: "2026-08-25",
+    status: "completed",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+    thumbnail: "https://images.unsplash.com/photo-1507413245164-6160d8298b31?w=600&auto=format&fit=crop&q=60",
+    visualTags: ["cnn-filters", "resnet-diagram", "vanishing-gradients", "skip-connections"],
+    transcriptionChunks: 128,
+    vectorCount: 256,
+    summary: "Deep dive into inductive bias in CNNs, spatial feature maps, and why residual skip connections solve vanishing gradients in 100+ layer networks.",
+  },
+  {
+    id: "lec-m3-01",
+    moduleId: "m3",
+    moduleCode: "M3",
+    title: "Lecture 08: Self-Attention & the Transformer Architecture",
+    instructor: "Dr. Ashish Vaswani",
+    duration: "58:10",
+    durationSeconds: 3490,
+    uploadDate: "2026-09-02",
+    status: "completed",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    thumbnail: "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=600&auto=format&fit=crop&q=60",
+    visualTags: ["attention-matrix", "query-key-value", "softmax-scaling", "positional-encoding"],
+    transcriptionChunks: 160,
+    vectorCount: 320,
+    summary: "Complete breakdown of Scaled Dot-Product Attention, Query-Key-Value projections, Multi-Head Attention, and cross-attention in Encoder-Decoder setups.",
+  },
+  {
+    id: "lec-m4-01",
+    moduleId: "m4",
+    moduleCode: "M4",
+    title: "Lecture 12: Hybrid Multimodal VideoRAG Architectures",
+    instructor: "Prof. Yann LeCun",
+    duration: "44:30",
+    durationSeconds: 2670,
+    uploadDate: "2026-09-10",
+    status: "completed",
+    videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    thumbnail: "https://images.unsplash.com/photo-1618172193763-c511deb635ca?w=600&auto=format&fit=crop&q=60",
+    visualTags: ["videorag-pipeline", "qdrant-vector-store", "whisper-asr", "multimodal-llm"],
+    transcriptionChunks: 115,
+    vectorCount: 230,
+    summary: "Overcoming multimodal token costs through the 3-step hybrid architecture: cheap metadata indexing, fast temporal search, and targeted clip verification.",
+  },
+];
+
+export const SAMPLE_QUESTIONS = [
+  "Explain backpropagation and how gradients propagate through weights",
+  "How does ResNet solve the vanishing gradient problem with skip connections?",
+  "What is the mathematical formulation of scaled dot-product attention?",
+  "How does the VideoRAG 3-step hybrid pipeline reduce multimodal token costs?",
+];
+
+export const MOCK_RESPONSES = {
+  default: {
+    answer: {
+      text: "Based on the retrieved lecture recordings, backpropagation computes the gradient of the loss function with respect to each weight by the chain rule, proceeding backwards from the output layer through hidden layers to update the parameters via gradient descent.",
+      confidence: "high",
+      reasoning: "Matched speech transcript at timestamp 04:15 discussing partial derivatives and visual slide showing gradient flow through layer weights.",
+    },
+    video_clip: {
+      clip_id: "demo-clip-01",
+      clip_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      clip_filename: "evidence_backprop_0415.mp4",
+      duration: 32.5,
+    },
+    timestamp: {
+      start_time: 255,
+      end_time: 287.5,
+      formatted_start: "04:15",
+      formatted_end: "04:47",
+      source_video: "lec-m1-01",
+      video_id: "Lecture 01: Neural Network Foundations",
+    },
+    sources: ["M1_Lecture_01_Audio_Transcript", "M1_Slide_Page_14_OCR"],
+  },
+  attention: {
+    answer: {
+      text: "Scaled Dot-Product Attention is computed as: Attention(Q, K, V) = softmax((Q * K^T) / sqrt(d_k)) * V. The scaling factor 1/sqrt(d_k) prevents the dot products from growing excessively large for large dimensions, which would push the softmax function into regions with tiny gradients.",
+      confidence: "high",
+      reasoning: "Found exact lecture moment in Lecture 08 where the lecturer writes the QKV equation on the digital chalkboard and explains gradient saturation in softmax.",
+    },
+    video_clip: {
+      clip_id: "demo-clip-attention",
+      clip_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+      clip_filename: "evidence_attention_formula.mp4",
+      duration: 35.0,
+    },
+    timestamp: {
+      start_time: 742,
+      end_time: 777,
+      formatted_start: "12:22",
+      formatted_end: "12:57",
+      source_video: "lec-m3-01",
+      video_id: "Lecture 08: Self-Attention & Transformers",
+    },
+    sources: ["M3_Transformer_Paper_Notes.pdf", "M3_Lecture_08_Transcript"],
+  },
+  resnet: {
+    answer: {
+      text: "Residual Networks introduce identity shortcut connections that skip one or more layers: F(x) + x. This allows gradients to flow directly through the identity mapping to earlier layers during backpropagation, eliminating the vanishing gradient barrier even in networks with over 100 layers.",
+      confidence: "high",
+      reasoning: "Lecture 04 timestamp 18:30 directly compares plain 34-layer networks against ResNet-34 residual connections.",
+    },
+    video_clip: {
+      clip_id: "demo-clip-resnet",
+      clip_url: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      clip_filename: "evidence_resnet_skip.mp4",
+      duration: 28.0,
+    },
+    timestamp: {
+      start_time: 1110,
+      end_time: 1138,
+      formatted_start: "18:30",
+      formatted_end: "18:58",
+      source_video: "lec-m2-01",
+      video_id: "Lecture 04: Convolutional Architectures",
+    },
+    sources: ["M2_Lecture_04_Visual_Tags", "M2_ResNet_Architecture_Slides.pdf"],
+  },
+};
+
+export const MOCK_UPLOAD_LIST = [
+  {
+    id: 101,
+    filename: "M1_Lecture_01_Backprop.mp4",
+    file_type: "video",
+    module: "M1",
+    file_size: 420 * 1024 * 1024,
+    created_at: "2026-08-20T10:30:00Z",
+    status: "completed",
+    pipeline_status: {
+      audio: "done",
+      asr: "done",
+      tags: "done",
+      embeddings: "done",
+      qdrant: "done",
+    },
+  },
+  {
+    id: 102,
+    filename: "M1_Calculus_Supplementary_Notes.pdf",
+    file_type: "pdf",
+    module: "M1",
+    file_size: 14 * 1024 * 1024,
+    created_at: "2026-08-21T14:15:00Z",
+    status: "completed",
+    pipeline_status: {
+      text_extract: "done",
+      embeddings: "done",
+      qdrant: "done",
+    },
+  },
+  {
+    id: 103,
+    filename: "M2_Lecture_04_ResNet_YOLO.mp4",
+    file_type: "video",
+    module: "M2",
+    file_size: 610 * 1024 * 1024,
+    created_at: "2026-08-25T09:00:00Z",
+    status: "completed",
+    pipeline_status: {
+      audio: "done",
+      asr: "done",
+      tags: "done",
+      embeddings: "done",
+      qdrant: "done",
+    },
+  },
+  {
+    id: 104,
+    filename: "M3_Lecture_08_Transformers.mp4",
+    file_type: "video",
+    module: "M3",
+    file_size: 750 * 1024 * 1024,
+    created_at: "2026-09-02T16:20:00Z",
+    status: "completed",
+    pipeline_status: {
+      audio: "done",
+      asr: "done",
+      tags: "done",
+      embeddings: "done",
+      qdrant: "done",
+    },
+  },
+];
+
+export const SYSTEM_STATS = {
+  totalVideos: 12,
+  totalHours: "16.4 hrs",
+  indexedChunks: 1480,
+  questionsAnswered: 342,
+  vectorStoreStatus: "Connected (Qdrant v1.9)",
+  multimodalModel: "Gemini 1.5 Pro / GPT-4o",
+  whisperModel: "Whisper Large-v3",
+};
